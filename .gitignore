@@ -1,0 +1,6 @@
+data/testimages/*
+.idea/
+GridViewPanner/bin/*
+GridViewPanner/obj/*
+GridViewPanner/bin
+GridViewPanner/obj
