@@ -27,6 +27,13 @@ public class SquareGridLayout
 
 	public void SetThumbnails(Thumbnail[] thumbnails)
 	{
+		if (_thumbnails != null)
+		{
+			foreach (var t in _thumbnails)
+			{
+				t.Unload();
+			}
+		}
 		_thumbnails = thumbnails;
 	}
 	
@@ -66,6 +73,10 @@ public class SquareGridLayout
 				}
 
 				Raylib.DrawTexture(thumbnail.Texture, j * _pixelPerSlice - _pixelOffset, i * _pixelPerSlice, Color.White);
+				
+				//debugging
+				//Raylib.DrawText($"{t} - ({i},{j})", 10+ j * _pixelPerSlice - _pixelOffset, 10+ i * _pixelPerSlice, 50, Color.Yellow);
+
 				t++;
 			}
 		}
@@ -93,6 +104,11 @@ public class SquareGridLayout
 				//snap back!
 				_pixelOffset = 0;
 				_indexOffset += _rowCount;
+				//prevent eventual integer overflow if it runs for too many ... years...
+				if (_indexOffset % _thumbnails.Length == 0)
+				{
+					_indexOffset-= _thumbnails.Length;
+				}
 			}
 		}
 		else
@@ -101,7 +117,10 @@ public class SquareGridLayout
 			{
 				_pixelOffset = _pixelPerSlice + _pixelOffset;
 				_indexOffset -= _rowCount;
-
+				if (_indexOffset % _thumbnails.Length == 0)
+				{
+					_indexOffset += _thumbnails.Length;
+				}
 			}
 		}
 	}

@@ -25,14 +25,20 @@ public static class Program
 
 		[Option('a', "direction", Required = false, HelpText = "Scroll Direction. Options are are 'left' and 'right'", Default = ScrollDirection.Right)]
 		public ScrollDirection direction { get; set; }
+
+		[Option('w', "watch", Required = false, HelpText = "Watch Directory. If true, will reload images when added or removed. Will freeze while scanning for png.",
+			Default = false)]
+		public bool watchFiles { get; set; }
 	}
-	private static SquareGridLayout _layout;
 
 	public enum ScrollDirection
 	{
 		Left,
 		Right
 	}
+	private static SquareGridLayout _layout;
+	private static FileSystemWatcher _watcher;
+	private static Options _options;
 	
 	public static void Main(string[] args)
 	{
@@ -43,6 +49,7 @@ public static class Program
 
 	public static void Run(Options options)
 	{
+		_options = options;
 		options.targetFPS = options.targetFPS == 0 ? 60 : options.targetFPS;
 		Raylib.SetTargetFPS(options.targetFPS);
 
@@ -58,6 +65,9 @@ public static class Program
 			ConvertDirToPNG(options.imagesDir);
 		}
 
+		//init the watcher AFTER we create the png's. 
+		InitWatcher(options);
+		
 		_layout = new SquareGridLayout(3, options.scrollSpeed, options.direction);
 		int size = _layout.Size;
 		var thumbnails = Thumbnail.GetThumbnailsFromDirectory(options.imagesDir, size);
@@ -74,7 +84,39 @@ public static class Program
 
 		Raylib.CloseWindow();
 	}
-	
+
+	private static void InitWatcher(Options options)
+	{
+		if (!options.watchFiles)
+		{
+			return;
+		}
+		var dirInfo = new DirectoryInfo(options.imagesDir);
+		_watcher = new FileSystemWatcher(dirInfo.FullName);
+		_watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.Attributes | NotifyFilters.LastWrite |
+		                        NotifyFilters.CreationTime | NotifyFilters.Size | NotifyFilters.FileName;
+		//changed?
+		_watcher.Created += WatcherOnChanged;
+		_watcher.Deleted += WatcherOnChanged;
+		_watcher.Changed += WatcherOnChanged;
+
+
+		_watcher.EnableRaisingEvents = true;
+	}
+
+	private static void WatcherOnChanged(object sender, FileSystemEventArgs e)
+	{
+		if (_options.Convert)
+		{
+			_watcher.EnableRaisingEvents = false;
+			ConvertDirToPNG(_options.imagesDir);
+			_watcher.EnableRaisingEvents = true;
+		}
+
+		var thumbnails = Thumbnail.GetThumbnailsFromDirectory(_options.imagesDir, _layout.Size);
+		_layout.SetThumbnails(thumbnails);
+	}
+
 	static void HandleParseError(IEnumerable<Error> errs)
 	{
 		//handle errors
@@ -108,7 +150,8 @@ public static class Program
 				}
 				//shit it's not on luinux
 				//convert and save.
-				jpg.SaveAs(Path.Combine([path, name+".png"]), AnyBitmap.ImageFormat.Png);
+                string[] p  = {path, name+".png"};
+				jpg.SaveAs(Path.Combine(p), AnyBitmap.ImageFormat.Png);
 				jpg.Dispose();
 			}
 		}
