@@ -49,8 +49,12 @@ public class Thumbnail
 	
 	
 	
-	public static Thumbnail[] GetThumbnailsFromDirectory(string directoryPath, int size)
+	public static Thumbnail[] GetThumbnailsFromDirectory(string? directoryPath, int size)
 	{
+		if (directoryPath == null)
+		{
+			throw new Exception("Directory for images is required.");
+		}
 		var dirInfo = new DirectoryInfo(directoryPath);
 		if (!dirInfo.Exists)
 		{

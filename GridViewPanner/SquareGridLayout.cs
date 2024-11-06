@@ -1,4 +1,5 @@
-﻿using Raylib_cs;
+﻿using System.Diagnostics;
+using Raylib_cs;
 
 namespace Thumbnailer;
 
@@ -8,12 +9,12 @@ public class SquareGridLayout
 	private int _pixelPerSlice;
 
 	private Thumbnail[] _thumbnails;
-	private int _rowCount = 3;
-	private int _columnCount;
+	private readonly int _rowCount;
+	private readonly int _columnCount;
 	private int _pixelOffset = 0;
 	private int _indexOffset;
-	private float _scrollSpeed;
-	private Program.ScrollDirection _direction;
+	private readonly float _scrollSpeed;
+	private readonly Program.ScrollDirection _direction;
 	public SquareGridLayout(int rowCount, float scrollSpeed, Program.ScrollDirection direction = Program.ScrollDirection.Right)
 	{
 		_rowCount = rowCount;
@@ -23,21 +24,19 @@ public class SquareGridLayout
 		_columnCount = (w / _pixelPerSlice) + 2;
 		_scrollSpeed = scrollSpeed;
 		_direction = direction;
+		_thumbnails = Array.Empty<Thumbnail>();
 	}
 
 	public void SetThumbnails(Thumbnail[] thumbnails)
 	{
-		if (_thumbnails != null)
+		foreach (var t in _thumbnails)
 		{
-			foreach (var t in _thumbnails)
-			{
-				t.Unload();
-			}
+			t.Unload();
 		}
 		_thumbnails = thumbnails;
 	}
 	
-	private Thumbnail GetThumbnail(int index)
+	private Thumbnail? GetThumbnail(int index)
 	{
 		if (_thumbnails.Length == 0)
 		{
@@ -67,6 +66,11 @@ public class SquareGridLayout
 			for (int i = 0; i < _rowCount; i++)
 			{
 				var thumbnail = GetThumbnail(t);
+				if (thumbnail == null)
+				{
+					Console.WriteLine("Uh oh, bad thumbnail?");
+					continue;
+				}
 				if (!thumbnail.IsLoaded)
 				{
 					thumbnail.Load();
