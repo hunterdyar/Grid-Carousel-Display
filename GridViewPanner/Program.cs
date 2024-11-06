@@ -46,18 +46,29 @@ public static class Program
 		var watchOption = new Option<bool>(name: "-w", description: "Watch folder for changes",
 			getDefaultValue: () => false);
 		rootCommand.Add(watchOption);
+
+		var convertOption = new Option<bool>(name: "-c", description: "Convert jpg to png",
+			getDefaultValue: () => false);
+		rootCommand.Add(convertOption);
+
+		var fpsOption = new Option<int>(name: "-fps", description: "Target FPS",
+			getDefaultValue: () => 60);
+		rootCommand.Add(fpsOption);
 		
-		rootCommand.SetHandler((dirOptionValue,speedOptionValue,directionOptionValue, watchOptionValue) =>
+		
+		rootCommand.SetHandler((dirOptionValue,speedOptionValue,directionOptionValue, watchOptionValue, fpsOptionValue, convertOptionValue) =>
 		{
 			var options = new Options()
 			{
 				ImagesDir = dirOptionValue,
 				ScrollSpeed = speedOptionValue,
 				Direction = directionOptionValue,
-				WatchFiles = watchOptionValue
+				WatchFiles = watchOptionValue,
+				TargetFps = fpsOptionValue,
+				Convert = convertOptionValue
 			};
 			Run(options);
-		}, directoryOption,speedOption,directionOption, watchOption);
+		}, directoryOption,speedOption,directionOption, watchOption, fpsOption, convertOption);
 		
 		await rootCommand.InvokeAsync(args);
 	}
